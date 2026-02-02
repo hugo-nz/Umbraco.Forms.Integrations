@@ -404,3 +404,6 @@ src/Umbraco.Forms.Integrations.TestSite.V10/Views
 appsettings.Local.json
 src/Umbraco.Forms.Integrations.Automation.Zapier/app.config
 src/Umbraco.Forms.Integrations.Automation.Zapier/packages.config
+
+# NuGet executable
+.nuget/

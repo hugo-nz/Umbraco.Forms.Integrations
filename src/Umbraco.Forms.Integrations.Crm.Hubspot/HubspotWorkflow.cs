@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Umbraco.Forms.Core;
 using Umbraco.Forms.Core.Attributes;
@@ -52,7 +53,10 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot
                 return WorkflowExecutionStatus.NotConfigured;
             }
 
-            var commandResult = _contactService.PostContactAsync(context.Record, fieldMappings, null).GetAwaiter().GetResult();
+            // Fetch HubSpot properties to enable label-to-value translation for enumeration fields
+            var hubspotProperties = _contactService.GetContactPropertiesAsync().GetAwaiter().GetResult()?.ToList();
+
+            var commandResult = _contactService.PostContactAsync(context.Record, fieldMappings, null, hubspotProperties).GetAwaiter().GetResult();
             switch (commandResult)
             {
                 case CommandResult.NotConfigured:

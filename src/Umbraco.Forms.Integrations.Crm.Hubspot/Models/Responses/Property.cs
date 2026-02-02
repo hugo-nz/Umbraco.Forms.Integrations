@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Umbraco.Forms.Integrations.Crm.Hubspot.Models.Responses
 {
@@ -12,5 +13,8 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot.Models.Responses
 
         [JsonProperty(PropertyName = "description")]
         public string Description { get; set; }
+
+        [JsonProperty(PropertyName = "options")]
+        public List<PropertyOption> Options { get; set; } = new List<PropertyOption>();
     }
 }
