@@ -138,9 +138,12 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot.Services
         }
 
         public async Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings)
-            => await PostContactAsync(record, fieldMappings, null);
+            => await PostContactAsync(record, fieldMappings, null, null);
 
         public async Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings, Dictionary<string, string> additionalFields)
+            => await PostContactAsync(record, fieldMappings, additionalFields, null);
+
+        public async Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings, Dictionary<string, string> additionalFields, IEnumerable<Property> hubspotProperties)
         {
             var authenticationDetails = GetConfiguredAuthenticationDetails();
             if (authenticationDetails.Mode == AuthenticationMode.Unauthenticated)
@@ -148,6 +151,11 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot.Services
                 _logger.LogWarning("Cannot access HubSpot API via API key or OAuth, as neither a key has been configured nor a refresh token stored.");
                 return CommandResult.NotConfigured;
             }
+
+            // Create a dictionary of HubSpot properties for quick lookup by name (handle potential duplicates by taking first)
+            var propertiesByName = hubspotProperties?
+                .GroupBy(p => p.Name)
+                .ToDictionary(g => g.Key, g => g.First()) ?? new Dictionary<string, Property>();
 
             // Map data from the workflow setting HubSpot fields
             // From the form field values submitted for this form submission
@@ -160,14 +168,16 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot.Services
                 var recordField = record.GetRecordField(Guid.Parse(fieldId));
                 if (recordField != null)
                 {
+                    // Get the HubSpot property to check for enumeration options
+                    propertiesByName.TryGetValue(mapping.HubspotField, out var matchedHubspotProperty);
+                    var propertyOptions = matchedHubspotProperty?.Options;
+
                     var value = _settings.AllowContactUpdate && mapping.AppendValue
-                        ? ";" + recordField.ValuesAsHubspotString(false)
-                        : recordField.ValuesAsHubspotString(false);
+                        ? ";" + recordField.ValuesAsHubspotString(propertyOptions, false)
+                        : recordField.ValuesAsHubspotString(propertyOptions, false);
 
                     propertiesRequestV1.Properties.Add(new PropertiesRequestV1.PropertyValue(mapping.HubspotField, value));
                     propertiesRequestV3.Properties.Add(mapping.HubspotField, value);
-
-                    // TODO: What about different field types in forms & HubSpot that are not simple text ones?
 
                     // "Email" appears to be a special form field used for uniqueness checks, so we can safely look it up by name.
                     if (mapping.HubspotField.ToLowerInvariant() == "email")

@@ -30,5 +30,7 @@ namespace Umbraco.Forms.Integrations.Crm.Hubspot.Services
         Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings);
 
         Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings, Dictionary<string, string> additionalFields);
+
+        Task<CommandResult> PostContactAsync(Record record, List<MappedProperty> fieldMappings, Dictionary<string, string> additionalFields, IEnumerable<Property> hubspotProperties);
     }
 }
